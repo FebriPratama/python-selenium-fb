@@ -12,7 +12,7 @@ import time
 import json
 
 #FUNCTION GET IMAGES
-def getImageFromGroup(driver):
+def getImageFromGroup(driver,id):
 	imgs = []
 	try:
 		myElem = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.ID, 'pagelet_pinned_posts')))
@@ -21,7 +21,22 @@ def getImageFromGroup(driver):
 
 		for link in soup.findAll("a"):
 			if "t1.0-9" in str(link.get('data-ploi')):
-				imgs.append({ "img" : link.get('data-ploi') })
+				imgs.append({ "img" : link.get('data-ploi'), "id" : id })
+
+		return imgs
+	except TimeoutException:
+	    return 0
+
+def getImageFromFp(driver,id):
+	imgs = []
+	try:
+		myElem = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME,'userContent')))
+
+		soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+		for link in soup.findAll("a"):
+			if "t1.0-9" in str(link.get('data-ploi')):
+				imgs.append({ "img" : link.get('data-ploi'), "id" : id })
 
 		return imgs
 	except TimeoutException:
@@ -52,17 +67,37 @@ except TimeoutException:
 urls = { "datas" : [
 	{
 		"url" : "https://www.facebook.com/groups/NonsenseTaDeVolta/",
+		"id" : "NonsenseTaDeVolta",
 		"type" : "group"
+	},
+	{
+		"url" : "https://www.facebook.com/groups/174001916489721/",
+		"id" : "PersatuanOPWARNETindonesia",
+		"type" : "group"
+	},
+	{
+		"url" : "https://www.facebook.com/pg/PenahanRasaBerak/posts/?ref=page_internal",
+		"id" : "PenahanRasaBerak",
+		"type" : "fp"
 	}
 ]}
 
 results = []
 
 for i in urls["datas"]:
-	driver.get(i["url"])
-	tmpResult = getImageFromGroup(driver)
-	if(tmpResult):
-		results.extend(tmpResult)
+	timeout = 1;
+	while 1:
+		driver.get(i["url"])
+		if(i["type"] == "group"):
+			tmpResult = getImageFromGroup(driver,i["id"])
+		if(i["type"] == "fp"):
+			tmpResult = getImageFromFp(driver,i["id"])
+		if(tmpResult):
+			results.extend(tmpResult)
+		if(timeout >2) or (tmpResult):
+			break
+
+		timeout=timeout+1
 
 print(json.dumps(results))
 driver.quit()
