@@ -64,7 +64,5 @@ for i in urls["datas"]:
 	if(tmpResult):
 		results.extend(tmpResult)
 
-
-
 print(json.dumps(results))
 driver.quit()
